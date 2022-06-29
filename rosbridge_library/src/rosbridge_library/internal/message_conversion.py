@@ -36,24 +36,34 @@ import rclpy
 from rclpy.clock import ROSClock
 
 from rosbridge_library.internal import ros_loader
-
+import array
 import math
 import re
 import string
 from base64 import standard_b64encode, standard_b64decode
 
+import numpy as np
 from rosbridge_library.util import string_types, bson
 
 import sys
 if sys.version_info >= (3, 0):
     type_map = {
-    "bool":    ["bool"],
-    "int":     ["int8", "byte", "uint8", "char",
-                "int16", "uint16", "int32", "uint32",
-                "int64", "uint64", "float32", "float64"],
-    "float":   ["float32", "float64", "double"],
-    "str":     ["string"]
-    }
+        "bool": ["bool", "boolean"],
+        "int": [
+            "int8",
+            "octet",
+            "uint8",
+            "char",
+            "int16",
+            "uint16",
+            "int32",
+            "uint32",
+            "int64",
+            "uint64",
+        ],
+        "float": ["float32", "float64", "double", "float"],
+        "str": ["string"],
+        }
     primitive_types = [bool, int, float]
     python2 = False
 else:
@@ -70,11 +80,27 @@ else:
     primitive_types = [bool, int, long, float]
     python2 = True
 
-list_types = [list, tuple]
+list_types = [list, tuple, np.ndarray, array.array]
 ros_time_types = ["builtin_interfaces/Time", "builtin_interfaces/Duration"]
-ros_primitive_types = ["bool", "byte", "char", "int8", "uint8", "int16",
-                       "uint16", "int32", "uint32", "int64", "uint64",
-                       "float32", "float64", "double", "string"]
+ros_primitive_types = [
+    "bool",
+    "boolean",
+    "octet",
+    "char",
+    "int8",
+    "uint8",
+    "int16",
+    "uint16",
+    "int32",
+    "uint32",
+    "int64",
+    "uint64",
+    "float32",
+    "float64",
+    "float",
+    "double",
+    "string",
+]
 ros_header_types = ["Header", "std_msgs/Header", "roslib/Header"]
 ros_binary_types = ["uint8[]", "char[]"]
 list_tokens = re.compile('<(.+?)>')
@@ -149,7 +175,7 @@ def msg_instance_type_repr(msg_inst):
     # E.g: 'std_msgs/Header'
     msg_type = type(msg_inst)
     if msg_type in primitive_types or msg_type in list_types:
-        return str(type(inst))
+        return str(type(msg_inst))
     inst_repr = str(msg_inst).split('.')
     return '{}/{}'.format(inst_repr[0], inst_repr[2].split('(')[0])
 
@@ -173,7 +199,7 @@ def _from_inst(inst, rostype):
 
     # Check for time or duration
     if rostype in ros_time_types:
-        return {"secs": inst.secs, "nsecs": inst.nsecs}
+        return {"sec": inst.sec, "nanosec": inst.nanosec}
 
     if(bson_only_mode is None):bson_only_mode = rospy.get_param('~bson_only_mode', False)
     # Check for primitive types
@@ -283,25 +309,43 @@ def _to_time_inst(msg, rostype, inst=None):
 
 def _to_primitive_inst(msg, rostype, roottype, stack):
     # Typecheck the msg
+    if isinstance(msg, int) and rostype in type_map["float"]:
+        # probably wrong parsing,
+        # fix that by casting the int to the expected float
+        msg = float(msg)
+
+    # Convert to byte
+    if rostype == "octet" and isinstance(msg, int):
+        return bytes([msg])
+
     msgtype = type(msg)
     if msgtype in primitive_types and rostype in type_map[msgtype.__name__]:
         return msg
-    elif msgtype in string_types and rostype in type_map[msgtype.__name__]:
-        return msg.encode("utf-8", "ignore") if python2 else msg
+    elif isinstance(msg, str) and rostype in type_map[msgtype.__name__]:
+        return msg
+    print('Hello1')
     raise FieldTypeMismatchException(roottype, stack, rostype, msgtype)
 
 
 def _to_list_inst(msg, rostype, roottype, inst, stack):
     # Typecheck the msg
     if type(msg) not in list_types:
+        print('Hello2')
         raise FieldTypeMismatchException(roottype, stack, rostype, type(msg))
 
     # Can duck out early if the list is empty
     if len(msg) == 0:
         return []
 
+    # Special mappings for numeric types https://design.ros2.org/articles/idl_interface_definition.html
+    if isinstance(inst, array.array) or isinstance(inst, np.ndarray):
+        return msg
+
     # Remove the list indicators from the rostype
-    rostype = re.search(list_tokens, rostype).group(1)
+    try:
+        rostype = re.search(list_tokens, rostype).group(1)
+    except AttributeError:
+        rostype = re.search(bounded_array_tokens, rostype).group(1)
 
     # Call to _to_inst for every element of the list
     return [_to_inst(x, rostype, roottype, None, stack) for x in msg]
@@ -310,12 +354,12 @@ def _to_list_inst(msg, rostype, roottype, inst, stack):
 def _to_object_inst(msg, rostype, roottype, inst, stack):
     # Typecheck the msg
     if type(msg) is not dict:
+        print('Hello3')
         raise FieldTypeMismatchException(roottype, stack, rostype, type(msg))
 
     # Substitute the correct time if we're an std_msgs/Header
     if rostype in ros_header_types:
         inst.stamp = ROSClock().now().to_msg()
-
     inst_fields = inst.get_fields_and_field_types()
 
     for field_name in msg:
