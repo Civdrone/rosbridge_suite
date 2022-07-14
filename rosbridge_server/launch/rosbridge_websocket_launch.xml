@@ -16,6 +16,9 @@
 
   <arg name="authenticate" default="false" />
 
+  <arg name="websocket_ping_interval" default="0.5" />
+  <arg name="websocket_ping_timeout" default="5" />
+
   <arg name="topics_glob" default="''[*]''" />
   <arg name="services_glob" default="''[*]''" />
   <arg name="params_glob" default="''[*]''" />
@@ -37,6 +40,9 @@
       <param name="unregister_timeout" value="$(var unregister_timeout)"/>
       <param name="use_compression" value="$(var use_compression)"/>
 
+      <param name="websocket_ping_interval" value="$(arg websocket_ping_interval)" />
+      <param name="websocket_ping_timeout" value="$(arg websocket_ping_timeout)" />
+
       <param name="topics_glob" value="$(var topics_glob)"/>
       <param name="services_glob" value="$(var services_glob)"/>
       <param name="params_glob" value="$(var params_glob)"/>
@@ -53,6 +59,9 @@
       <param name="max_message_size" value="$(var max_message_size)"/>
       <param name="unregister_timeout" value="$(var unregister_timeout)"/>
       <param name="use_compression" value="$(var use_compression)"/>
+
+      <param name="websocket_ping_interval" value="$(arg websocket_ping_interval)" />
+      <param name="websocket_ping_timeout" value="$(arg websocket_ping_timeout)" />
 
       <param name="topics_glob" value="$(var topics_glob)"/>
       <param name="services_glob" value="$(var services_glob)"/>
