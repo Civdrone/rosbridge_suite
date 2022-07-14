@@ -99,8 +99,8 @@ class RosbridgeWebsocketNode(Node):
 
         # get tornado application parameters
         tornado_settings = {}
-        tornado_settings['websocket_ping_interval'] = float(self.declare_parameter('websocket_ping_interval', 0).value)
-        tornado_settings['websocket_ping_timeout'] = float(self.declare_parameter('websocket_ping_timeout', 30).value)
+        tornado_settings['websocket_ping_interval'] = float(self.declare_parameter('websocket_ping_interval', 0.5).value)
+        tornado_settings['websocket_ping_timeout'] = float(self.declare_parameter('websocket_ping_timeout', 10).value)
 
         # SSL options
         certfile = self.declare_parameter('certfile').value
