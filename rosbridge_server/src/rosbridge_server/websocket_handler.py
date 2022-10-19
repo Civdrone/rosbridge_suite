@@ -176,6 +176,7 @@ class RosbridgeWebSocket(WebSocketHandler):
         cls.node_handle.get_logger().info("Client disconnected. {} clients total.".format(cls.clients_connected))
 
     def send_message(self, message):
+        cls = self.__class__
         if type(message) == bson.BSON:
             binary = True
         elif type(message) == bytearray:
@@ -185,6 +186,7 @@ class RosbridgeWebSocket(WebSocketHandler):
             binary = False
 
         with self._write_lock:
+            # cls.node_handle.get_logger().info("Dani send_message " + str(message))
             IOLoop.instance().add_callback(partial(self.prewrite_message, message, binary))
 
     @coroutine

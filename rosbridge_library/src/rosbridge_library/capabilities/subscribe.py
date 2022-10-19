@@ -328,6 +328,7 @@ class Subscribe(Capability):
         else:
             outgoing_msg["msg"] = message.get_json_values()
 
+        # self.protocol.log("info", "Dani Send message to WebSocket. " + str(outgoing_msg["msg"]))
         self.protocol.send(outgoing_msg)
 
     def finish(self):

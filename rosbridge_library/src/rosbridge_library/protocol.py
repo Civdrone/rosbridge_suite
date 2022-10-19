@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import time
+import base64
 
 from rosbridge_library.internal.exceptions import InvalidArgumentException
 from rosbridge_library.internal.exceptions import MissingArgumentException
@@ -235,8 +236,11 @@ class Protocol:
         cid     -- (optional) an associated id
 
         """
+        # self.log("info", "send %s message to client"
+                        #  % message, cid)
         serialized = self.serialize(message, cid)
         if serialized is not None:
+            # self.log("info", "Dani serialized is not None")
             if self.png == "png":
                 # TODO: png compression on outgoing messages
                 # encode message
@@ -286,14 +290,23 @@ class Protocol:
 
         Returns a JSON string representing the dictionary
         """
+        # self.log("info", "Dani serialize %s message to client"
+        #                  % msg, cid)
         try:
             if type(msg) == bytearray:
                 return msg
             if has_binary(msg) or self.bson_only_mode:
                 return bson.BSON.encode(msg)
-            else:    
+            else:
+                # msg["msg"] =  msg["msg"].decode('utf-8')   
+                # temp_msg_body = base64.b64encode(msg["msg"])
+                # temp_msg_body_str = temp_msg_body.decode()
+                # msg["msg"] = temp_msg_body_str
+                # temp_level_str = msg["msg"]["status"][0]["level"].decode('utf-8')
+                # msg["msg"]["status"][0]["level"] = temp_level_str
                 return json.dumps(msg)
-        except:
+        except BaseException as err:
+            self.log("error", "Unable to serialize " + msg["msg"] + " message to client. Error " + str(err))
             if cid is not None:
                 # Only bother sending the log message if there's an id
                 self.log("error", "Unable to serialize %s message to client"
