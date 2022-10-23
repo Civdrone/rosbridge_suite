@@ -254,7 +254,7 @@ class Subscribe(Capability):
         }
         self._subscriptions[topic].subscribe(**subscribe_args)
 
-        self.protocol.log("info", "Subscribed to %s" % topic)
+        self.protocol.log("info", "Subscribed to " + topic + "queue_length " + str(subscribe_args["queue_length"]))
 
     def unsubscribe(self, msg):
         # Pull out the ID
@@ -328,7 +328,9 @@ class Subscribe(Capability):
         else:
             outgoing_msg["msg"] = message.get_json_values()
 
-        # self.protocol.log("info", "Dani Send message to WebSocket. " + str(outgoing_msg["msg"]))
+        # str_msg = str(outgoing_msg["msg"])
+        # if(topic=='/Planner/state'):
+        #     self.protocol.log("info", "Dani Send message to WebSocket. " + str_msg)
         self.protocol.send(outgoing_msg)
 
     def finish(self):

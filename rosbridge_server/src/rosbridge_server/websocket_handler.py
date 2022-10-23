@@ -186,7 +186,9 @@ class RosbridgeWebSocket(WebSocketHandler):
             binary = False
 
         with self._write_lock:
-            # cls.node_handle.get_logger().info("Dani send_message " + str(message))
+            str_message = str(message)
+            if(str_message.__contains__('/Planner/state')):
+                cls.node_handle.get_logger().info("Dani send_message " + str_message)
             IOLoop.instance().add_callback(partial(self.prewrite_message, message, binary))
 
     @coroutine

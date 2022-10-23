@@ -267,7 +267,7 @@ class Protocol:
             # else send message as it is
             else:
                 self.outgoing(serialized)
-                time.sleep(self.delay_between_messages)
+                # time.sleep(self.delay_between_messages)
 
     def finish(self):
         """ Indicate that the client is finished and clean up resources.
@@ -290,8 +290,8 @@ class Protocol:
 
         Returns a JSON string representing the dictionary
         """
-        # self.log("info", "Dani serialize %s message to client"
-        #                  % msg, cid)
+        # if(msg.__contains__('state')):
+        #     self.log("info", "Dani serialize %s message to client" % msg, cid)
         try:
             if type(msg) == bytearray:
                 return msg
@@ -304,7 +304,10 @@ class Protocol:
                 # msg["msg"] = temp_msg_body_str
                 # temp_level_str = msg["msg"]["status"][0]["level"].decode('utf-8')
                 # msg["msg"]["status"][0]["level"] = temp_level_str
-                return json.dumps(msg)
+                str_msg = json.dumps(msg)
+                # if(str_msg.__contains__('/Planner/state')):
+                #     self.log("info", "Dani serialized message %s" % msg)
+                return str_msg
         except BaseException as err:
             self.log("error", "Unable to serialize " + msg["msg"] + " message to client. Error " + str(err))
             if cid is not None:
