@@ -37,7 +37,7 @@ from rosbridge_library.internal.ros_loader import get_service_class
 from rosbridge_library.internal.ros_loader import get_service_request_instance
 from rosbridge_library.internal.message_conversion import populate_instance
 from rosbridge_library.internal.message_conversion import extract_values
-
+import time
 
 class InvalidServiceException(Exception):
     def __init__(self, servicename):
@@ -73,7 +73,7 @@ class ServiceCaller(Thread):
     def run(self):
         try:
             # Call the service and pass the result to the success handler
-            self.success(call_service(self.node_handle, self.service, self.args))
+            self.success(call_service(self.node_handle, self.service, self.is_alive(), self.args))
         except Exception as e:
             # On error, just pass the exception to the error handler
             self.error(e)
@@ -95,7 +95,7 @@ def args_to_service_request_instance(service, inst, args):
     populate_instance(msg, inst)
 
 
-def call_service(node_handle, service, args=None):
+def call_service(node_handle, service, is_separate_thread, args=None):
     # Given the service name, fetch the type and class of the service,
     # and a request instance
 
@@ -120,7 +120,12 @@ def call_service(node_handle, service, args=None):
     client = node_handle.create_client(service_class, service)
 
     future = client.call_async(inst)
-    spin_until_future_complete(node_handle, future)
+    if is_separate_thread:
+        while(not future.done()):
+            time.sleep(0.01)
+    else:
+        spin_until_future_complete(node_handle, future)
+
     if future.result() is not None:
         # Turn the response into JSON and pass to the callback
         json_response = extract_values(future.result())
