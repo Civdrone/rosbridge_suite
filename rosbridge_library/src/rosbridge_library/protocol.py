@@ -112,13 +112,19 @@ class Protocol:
 
     # added default message_string="" to allow recalling incoming until buffer is empty without giving a parameter
     # --> allows to get rid of (..or minimize) delay between client-side sends
-    def incoming(self, message_string=""):
+    def incoming(self, message=""):
         """ Process an incoming message from the client
 
         Keyword arguments:
-        message_string -- the wire-level message sent by the client
+        message -- the wire-level message sent by the client
 
         """
+        message_string = ""
+        if isinstance(message, bytes):
+            message_string = message.decode("utf-8")
+        elif isinstance(message, str):
+            message_string = message
+
         self.buffer = self.buffer + message_string
         msg = None
 
@@ -298,7 +304,7 @@ class Protocol:
             if has_binary(msg) or self.bson_only_mode:
                 return bson.BSON.encode(msg)
             else:
-                # msg["msg"] =  msg["msg"].decode('utf-8')   
+                # msg["msg"] =  msg["msg"].decode('utf-8')
                 # temp_msg_body = base64.b64encode(msg["msg"])
                 # temp_msg_body_str = temp_msg_body.decode()
                 # msg["msg"] = temp_msg_body_str

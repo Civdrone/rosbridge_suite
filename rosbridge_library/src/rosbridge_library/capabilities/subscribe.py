@@ -254,7 +254,7 @@ class Subscribe(Capability):
         }
         self._subscriptions[topic].subscribe(**subscribe_args)
 
-        self.protocol.log("info", "Subscribed to " + topic + "queue_length " + str(subscribe_args["queue_length"]))
+        self.protocol.log("info", "Subscribed to " + topic + " queue_length " + str(subscribe_args["queue_length"]))
 
     def unsubscribe(self, msg):
         # Pull out the ID
